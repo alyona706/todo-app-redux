@@ -1,26 +1,41 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addTodo, toggleTodo, deleteTodo } from './todoSlice';
+import { addTodo, toggleTodo, deleteTodo, editTodo, clearTodos } from './todoSlice';
 import './TodoListComponent.css';
 
 
 export default function TodoListComponent() {
   const [text, setText] = useState('');
+  const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const todos = useSelector(state => state.todos);
   const dispatch = useDispatch();
 
-  const handleAdd = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (text.trim()) {
-      dispatch(addTodo(text));
-        setText('');
-        setShowForm(false);
+      if (editingId !== null) {
+        dispatch(editTodo({ id: editingId, text }));
+        setEditingId(null);
+      } else {
+        dispatch(addTodo(text));
       }
-    };
+      setText("");
+    }
+  };
 
-    return (
+  const startEdit = (todo) => {
+    setText(todo.text);
+    setEditingId(todo.id);
+  };
+
+  const cancelEdit = () => {
+    setText("");
+    setEditingId(null);
+  };
+
+  return (
         <div className="todo-container">
           <h2>TODO App</h2>
           <button onClick={() => setShowForm(prev => !prev)}>
@@ -28,13 +43,20 @@ export default function TodoListComponent() {
           </button>
 
           {showForm && (
-            <form className="add-todo" onSubmit={handleAdd}>
+            <form className="add-todo" onSubmit={handleSubmit}>
               <input value={text}
                    onChange={e => setText(e.target.value)}
                    placeholder="Enter task"
               />
-              <button type="submit">Add</button>
+              <button type="submit">{editingId !== null ? "Save" : "Add"}</button>
+              {editingId !== null && (
+                <button type="button" onClick={cancelEdit}>Cancel</button>
+              )}
             </form>
+          )}
+
+          {todos.length > 0 && (
+            <button className="clear-btn" onClick={() => dispatch(clearTodos())}>Clear All</button>
           )}
 
           <ul className="todo-list">
@@ -47,11 +69,14 @@ export default function TodoListComponent() {
                   />
                   <p className={`todo-text ${todo.completed ? 'todo-completed' : ''}`}>{todo.text}</p>
                 </label>
-                <button type="button" onClick={() => dispatch(deleteTodo(todo.id))}>Delete</button>
+                <div className="todo-actions">
+                  <button onClick={() => startEdit(todo)}>Edit</button>
+                  <button onClick={() => dispatch(deleteTodo(todo.id))}>Delete</button>
+                </div>
               </li>
             ))}
           </ul>
         </div>
-    )
+  )
 };
 
