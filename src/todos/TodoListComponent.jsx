@@ -26,6 +26,7 @@ export default function TodoListComponent() {
   };
 
   const startEdit = (todo) => {
+    setShowForm(true);
     setText(todo.text);
     setEditingId(todo.id);
   };
